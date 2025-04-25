@@ -21,6 +21,16 @@ from config import api_id, api_hash, bot_token, auth_users, sudo_users
 import sys
 import re
 import os
+import threading
+from http.server import SimpleHTTPRequestHandler, HTTPServer
+
+def run_health_server():
+    server = HTTPServer(("0.0.0.0", 8000), SimpleHTTPRequestHandler)
+    server.serve_forever()
+
+# Start the HTTP server in a background thread
+threading.Thread(target=run_health_server, daemon=True).start()
+
 
 bot = Client(
     "bot",
