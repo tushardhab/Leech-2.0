@@ -193,14 +193,14 @@ async def account_login(bot: Client, m: Message):
                 
                 if "testbook.com" in url or "classplusapp.com/drm" in url or "media-cdn.classplusapp.com/drm" in url:
                     url = res['drmUrls']['manifestUrl']
-                    
+   
                 else:
                     url = res["url"]
 
-                elif "d1d34p8vz63oiq" in url or "sec1.pw.live" in url:
+            elif "d1d34p8vz63oiq" in url or "sec1.pw.live" in url:
                          url_id = url.split("/")[-2]  # extract the second-to-last part
-                                     url = f"https://anonymouspwplayer-b99f57957198.herokuapp.com/pw?url={url_id}?token={pw_token}"
-                else:
+                                     url = f"https://as-multiverse-b0b2769da88f.herokuapp.com/{url_id}/master.m3u8?token={pw_token}"
+            else:
                      url = url
                 
             name1 = links[i][0].replace("\t", "").replace(":", "").replace("/", "").replace("+", "").replace("#", "").replace("|", "").replace("@", "").replace("*", "").replace(".", "").replace("https", "").replace("http", "").strip()
