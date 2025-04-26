@@ -20,11 +20,9 @@ import os
 import threading
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 
-
 def run_health_server():
     server = HTTPServer(("0.0.0.0", 8000), SimpleHTTPRequestHandler)
     server.serve_forever()
-
 
 threading.Thread(target=run_health_server, daemon=True).start()
 
@@ -35,16 +33,14 @@ bot = Client(
     bot_token=bot_token
 )
 
-
 @bot.on_message(filters.command(["stop"]))
 async def cancel_command(bot: Client, m: Message):
     user_id = m.from_user.id if m.from_user else None
     if user_id not in auth_users and user_id not in sudo_users:
         await m.reply("**You Are Not Subscribed To This Bot\nContact - @Mahagoraxyz**", quote=True)
         return
-    await m.reply_text("**STOPPED**⛔️🚩", True)
+    await m.reply_text("**STOPPED**🛑🛑", True)
     os.execl(sys.executable, sys.executable, *sys.argv)
-
 
 @bot.on_message(filters.command(["start"]))
 async def account_login(bot: Client, m: Message):
@@ -66,15 +62,30 @@ async def account_login(bot: Client, m: Message):
             with open(x, "r") as f:
                 content = f.read()
             content = content.split("\n")
-            links = [i.split("://", 1) for i in content]
+            
+            # ✅ Corrected safer URL extraction here
+            links = []
+            for i in content:
+                match = re.search(r'(https?://\S+)', i)
+                if match:
+                    title = i.split(match.group())[0].strip()
+                    url = match.group()
+                    links.append((title, url))
+                    
             os.remove(x)
         except:
-            await m.reply_text("Invalid file input.🫲")
+            await m.reply_text("Invalid file input.🥲")
             os.remove(x)
             return
     else:
         content = input.text.split("\n")
-        links = [i.split("://", 1) for i in content]
+        links = []
+        for i in content:
+            match = re.search(r'(https?://\S+)', i)
+            if match:
+                title = i.split(match.group())[0].strip()
+                url = match.group()
+                links.append((title, url))
 
     await editable.edit(f"Total links found are **{len(links)}**\n\nSend From where you want to download initial is **1**")
     input0: Message = await bot.listen(editable.chat.id)
@@ -131,8 +142,9 @@ async def account_login(bot: Client, m: Message):
 
     try:
         for i in range(count - 1, len(links)):
-            V = links[i][1].replace("file/d/", "uc?export=download&id=").replace("www.youtube-nocookie.com/embed", "youtu.be").replace("?modestbranding=1", "").replace("/view?usp=sharing", "")
-            url = "https://" + V
+            title, V = links[i]
+            V = V.replace("file/d/", "uc?export=download&id=").replace("www.youtube-nocookie.com/embed", "youtu.be").replace("?modestbranding=1", "").replace("/view?usp=sharing", "")
+            url = V
 
             if "visionias" in url:
                 async with ClientSession() as session:
@@ -143,7 +155,7 @@ async def account_login(bot: Client, m: Message):
             elif 'classplusapp' in url or "testbook.com" in url or "classplusapp.com/drm" in url or "media-cdn.classplusapp.com/drm" in url:
                 headers = {
                     'host': 'api.classplusapp.com',
-                    'x-access-token': 'your-token-here',
+                    'x-access-token': 'eyJjb3Vyc2VJZCI6IjQ1NjY4NyIsInR1dG9ySWQiOm51bGwsIm9yZ0lkIjo0ODA2MTksImNhdGVnb3J5SWQiOm51bGx9',
                     'accept-language': 'EN',
                     'api-version': '18',
                     'app-version': '1.4.73.2',
@@ -165,15 +177,15 @@ async def account_login(bot: Client, m: Message):
                 else:
                     url = res["url"]
 
-            elif "d1d34p8vz63oiq" in url:
+            elif "d1d34p8vz63oiq" in url or "sec1.pw.live" in url:
                 url_id = url.split("/")[-2]
                 url = f"https://as-multiverse-b0b2769da88f.herokuapp.com/{url_id}/master.m3u8?token={pw_token}"
 
-            elif "sec1.pw.live" in url:
-                url = f"https://anonymouspwplayer-b99f57957198.herokuapp.com/pw?url={url}?token={pw_token}"
-
-            name1 = links[i][0].translate(str.maketrans('', '', "\t:/+|@*.\\"))[:60]
-            name = f'{str(count).zfill(3)}) {name1}'
+            else:
+                url = url
+                
+            name1 = links[i][0].replace("\t", "").replace(":", "").replace("/", "").replace("+", "").replace("#", "").replace("|", "").replace("@", "").replace("*", "").replace(".", "").replace("https", "").replace("http", "").strip()
+            name = f'{str(count).zfill(3)}) {name1[:60]}'
 
             ytf = f"b[height<={raw_text2}][ext=mp4]/bv[height<={raw_text2}][ext=mp4]+ba[ext=m4a]/b[ext=mp4]" if "youtu" in url else f"b[height<={raw_text2}]/bv[height<={raw_text2}]+ba/b/bv+ba"
 
