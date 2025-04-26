@@ -197,11 +197,11 @@ async def account_login(bot: Client, m: Message):
                 else:
                     url = res["url"]
 
-           elif "d1d34p8vz63oiq" in url or "sec1.pw.live" in url:
-    url_id = url.split("/")[-2]  # extract the second-to-last part
-    url = f"https://anonymouspwplayer-b99f57957198.herokuapp.com/pw?url={url_id}?token={pw_token}"
-else:
-    url = url
+                elif "d1d34p8vz63oiq" in url or "sec1.pw.live" in url:
+                         url_id = url.split("/")[-2]  # extract the second-to-last part
+                                     url = f"https://anonymouspwplayer-b99f57957198.herokuapp.com/pw?url={url_id}?token={pw_token}"
+                else:
+                     url = url
                 
             name1 = links[i][0].replace("\t", "").replace(":", "").replace("/", "").replace("+", "").replace("#", "").replace("|", "").replace("@", "").replace("*", "").replace(".", "").replace("https", "").replace("http", "").strip()
             name = f'{str(count).zfill(3)}) {name1[:60]}'
