@@ -20,9 +20,11 @@ import os
 import threading
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 
+
 def run_health_server():
     server = HTTPServer(("0.0.0.0", 8000), SimpleHTTPRequestHandler)
     server.serve_forever()
+
 
 threading.Thread(target=run_health_server, daemon=True).start()
 
@@ -33,14 +35,16 @@ bot = Client(
     bot_token=bot_token
 )
 
+
 @bot.on_message(filters.command(["stop"]))
 async def cancel_command(bot: Client, m: Message):
     user_id = m.from_user.id if m.from_user else None
     if user_id not in auth_users and user_id not in sudo_users:
         await m.reply("**You Are Not Subscribed To This Bot\nContact - @Mahagoraxyz**", quote=True)
         return
-    await m.reply_text("**STOPPED**🛑🛑", True)
+    await m.reply_text("**STOPPED**⛔️🚩", True)
     os.execl(sys.executable, sys.executable, *sys.argv)
+
 
 @bot.on_message(filters.command(["start"]))
 async def account_login(bot: Client, m: Message):
@@ -59,46 +63,18 @@ async def account_login(bot: Client, m: Message):
         credit = f"[{m.from_user.first_name}](tg://user?id={m.from_user.id})"
 
         try:
-            with open(x, "r", encoding="utf-8") as f:
+            with open(x, "r") as f:
                 content = f.read()
-            lines = content.splitlines()
-            links = []
-            for line in lines:
-                line = line.strip()
-                if "://" in line:
-                    title, url_part = line.split("://", 1)
-                    url = "https://" + url_part.strip()
-
-                    if not title.strip():
-                        title = "Untitled"
-
-                    title = re.sub(r'[^A-Za-z0-9\s]', '', title).strip()
-                    if not title:
-                        title = "Untitled"
-
-                    links.append((title, url))
+            content = content.split("\n")
+            links = [i.split("://", 1) for i in content]
             os.remove(x)
-        except Exception as e:
-            await m.reply_text(f"Invalid file input. 🥲 Error: {e}")
+        except:
+            await m.reply_text("Invalid file input.🫲")
             os.remove(x)
             return
     else:
-        lines = input.text.splitlines()
-        links = []
-        for line in lines:
-            line = line.strip()
-            if "://" in line:
-                title, url_part = line.split("://", 1)
-                url = "https://" + url_part.strip()
-
-                if not title.strip():
-                    title = "Untitled"
-
-                title = re.sub(r'[^A-Za-z0-9\s]', '', title).strip()
-                if not title:
-                    title = "Untitled"
-
-                links.append((title, url))
+        content = input.text.split("\n")
+        links = [i.split("://", 1) for i in content]
 
     await editable.edit(f"Total links found are **{len(links)}**\n\nSend From where you want to download initial is **1**")
     input0: Message = await bot.listen(editable.chat.id)
@@ -156,7 +132,7 @@ async def account_login(bot: Client, m: Message):
     try:
         for i in range(count - 1, len(links)):
             V = links[i][1].replace("file/d/", "uc?export=download&id=").replace("www.youtube-nocookie.com/embed", "youtu.be").replace("?modestbranding=1", "").replace("/view?usp=sharing", "")
-            url = V
+            url = "https://" + V
 
             if "visionias" in url:
                 async with ClientSession() as session:
@@ -167,7 +143,7 @@ async def account_login(bot: Client, m: Message):
             elif 'classplusapp' in url or "testbook.com" in url or "classplusapp.com/drm" in url or "media-cdn.classplusapp.com/drm" in url:
                 headers = {
                     'host': 'api.classplusapp.com',
-                    'x-access-token': 'eyJjb3Vyc2VJZCI6IjQ1NjY4NyIsInR1dG9ySWQiOm51bGwsIm9yZ0lkIjo0ODA2MTksImNhdGVnb3J5SWQiOm51bGx9',
+                    'x-access-token': 'your-token-here',
                     'accept-language': 'EN',
                     'api-version': '18',
                     'app-version': '1.4.73.2',
@@ -189,11 +165,14 @@ async def account_login(bot: Client, m: Message):
                 else:
                     url = res["url"]
 
-            elif "d1d34p8vz63oiq" in url or "sec1.pw.live" in url:
+            elif "d1d34p8vz63oiq" in url:
                 url_id = url.split("/")[-2]
                 url = f"https://as-multiverse-b0b2769da88f.herokuapp.com/{url_id}/master.m3u8?token={pw_token}"
 
-            name1 = links[i][0][:60]
+            elif "sec1.pw.live" in url:
+                url = f"https://anonymouspwplayer-b99f57957198.herokuapp.com/pw?url={url}?token={pw_token}"
+
+            name1 = links[i][0].translate(str.maketrans('', '', "\t:/+|@*.\\"))[:60]
             name = f'{str(count).zfill(3)}) {name1}'
 
             ytf = f"b[height<={raw_text2}][ext=mp4]/bv[height<={raw_text2}][ext=mp4]+ba[ext=m4a]/b[ext=mp4]" if "youtu" in url else f"b[height<={raw_text2}]/bv[height<={raw_text2}]+ba/b/bv+ba"
