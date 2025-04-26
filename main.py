@@ -53,7 +53,7 @@ async def account_login(bot: Client, m: Message):
     user_id = m.from_user.id if m.from_user is not None else None
 
     if user_id not in auth_users and user_id not in sudo_users:
-        await m.reply(f"**You Are Not Subscribed To This Bot\nContact - @Mahagoraxyz**", quote=True)
+        await m.reply(f"**You Are Not Subscribed To This Bot\nContact - @HKOWNER0**", quote=True)
         return
         
     editable = await m.reply_text(f"**Hey [{m.from_user.first_name}](tg://user?id={m.from_user.id})\nSend txt file**")
@@ -197,11 +197,11 @@ async def account_login(bot: Client, m: Message):
                 else:
                     url = res["url"]
 
-            elif "d1d34p8vz63oiq" in url or "sec1.pw.live" in url:
-                url = f"https://anonymouspwplayer-b99f57957198.herokuapp.com/pw?url={url}?token={pw_token}"
-                
-            else:
-                url = url
+           elif "d1d34p8vz63oiq" in url or "sec1.pw.live" in url:
+    url_id = url.split("/")[-2]  # extract the second-to-last part
+    url = f"https://anonymouspwplayer-b99f57957198.herokuapp.com/pw?url={url_id}?token={pw_token}"
+else:
+    url = url
                 
             name1 = links[i][0].replace("\t", "").replace(":", "").replace("/", "").replace("+", "").replace("#", "").replace("|", "").replace("@", "").replace("*", "").replace(".", "").replace("https", "").replace("http", "").strip()
             name = f'{str(count).zfill(3)}) {name1[:60]}'
