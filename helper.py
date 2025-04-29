@@ -12,15 +12,60 @@ import aiofiles
 from pyrogram.types import Message
 from pyrogram import Client, filters
 
+async def generate_thumbnail(filename, width=1280, height=720, time="0.0"):
+  try:
 
-def duration(filename):
-    result = subprocess.run([
-        "ffprobe", "-v", "error", "-show_entries", "format=duration", "-of",
-        "default=noprint_wrappers=1:nokey=1", filename
-    ],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT)
-    return float(result.stdout)
+    if os.path.exists(f"{filename}.jpg"):
+        os.remove(f"{filename}.jpg")
+
+    subprocess.run(
+      [
+        "ffmpeg",
+        "-ss",
+        time,
+        "-i",
+        filename,
+        "-vframes",
+        "1",
+        "-s",
+        f"{width}x{height}",
+        f"{filename}.jpg",
+      ],
+      check=True,
+    )
+    return f"{filename}.jpg"
+  except subprocess.CalledProcessError as e:
+    return None
+
+def get_video_duration(filename, max_attempts=3):
+    for attempt in range(max_attempts):
+        try:
+            command = [
+                'ffprobe',
+                '-v', 'error',
+                '-show_format',
+                '-print_format', 'json',
+                filename
+            ]
+
+            result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True)
+            output = json.loads(result.stdout)
+            if 'format' in output and 'duration' in output['format']:
+                try:
+                    duration = int(float(output['format']['duration']))
+                    return duration
+                except (ValueError, TypeError):
+                    print(f"Attempt {attempt+1}: Invalid duration format. Retrying...")
+                    continue
+                    
+            print(f"Attempt {attempt+1}: Duration not found. Retrying...")
+            continue
+            
+        except Exception as e:
+            print(f"Attempt {attempt+1}: An unexpected error occurred: {e}. Retrying...")
+
+    print(f"Failed to get duration after {max_attempts} attempts. Returning 0")
+    return 0
 
 
 async def download(url, name):
@@ -74,57 +119,63 @@ def time_name():
     return f"{date} {current_time}.mp4"
 
 
-async def download_video(url, cmd, name):
-    download_cmd = f'{cmd} -R 25 --fragment-retries 25 --external-downloader aria2c --downloader-args "aria2c: -x 16 -j 32"'
-    global failed_counter
-    print(download_cmd)
-    logging.info(download_cmd)
-    k = subprocess.run(download_cmd, shell=True)
-    if "visionias" in cmd and k.returncode != 0 and failed_counter <= 10:
-        failed_counter += 1
-        await asyncio.sleep(5)
-        await download_video(url, cmd, name)
-    failed_counter = 0
+async def download_video(url, name, raw_text2):
     try:
-        if os.path.isfile(name):
-            return name
-        elif os.path.isfile(f"{name}.webm"):
-            return f"{name}.webm"
-        name = name.split(".")[0]
-        if os.path.isfile(f"{name}.mkv"):
-            return f"{name}.mkv"
-        elif os.path.isfile(f"{name}.mp4"):
-            return f"{name}.mp4"
-        elif os.path.isfile(f"{name}.mp4.webm"):
-            return f"{name}.mp4.webm"
+        output_file = f"{name}.mp4"
+        
+        command = [
+                "yt-dlp",
+                "-k", 
+                "--allow-unplayable-formats", 
+                "--geo-bypass",
+                "--cookies", "cookies.txt",
+                "-f", "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b",
+                "-S", f"res~{raw_text2},+size,+br",
+                "--fixup", "never",
+                url,
+                "--external-downloader", "aria2c",
+                "--external-downloader-args", "-x 16 -s 16 -k 1M", 
+                "--output", output_file,
+                "--merge-output-format", "mp4",
+        ]
+            
+        result = subprocess.run(command, check=True, text=True, stderr=subprocess.PIPE)
+        
+        if result.returncode == 0:
+            print(f"Successfully downloaded: {output_file}")
+                                
+            if os.path.isfile(output_file):
+                return output_file
 
-        return name
+        else:
+            print(f"yt-dlp command failed: {result.stderr.strip()}")
+            return None, f"yt-dlp command failed: {result.stderr.strip()}"
+
     except FileNotFoundError as exc:
-        return os.path.isfile.splitext[0] + "." + "mp4"
+        print(f"File not found: {exc}")
+        return None, f"File not found: {exc}"
+    except subprocess.CalledProcessError as e:
+        print(f"An error occurred: {e.stderr.strip()}")
+        return None, f"An error occurred: {e.stderr.strip()}"
         
 async def send_vid(bot: Client, m: Message, cc, filename, thumb, name):
 
+    generated_thumb = None
+    generated_thumb = await generate_thumbnail(filename)
+    
     reply = await m.reply_text(f"**UPLOADING » {name}**")
-    
-    subprocess.run(f'ffmpeg -i "{filename}" -ss 00:01:00 -vframes 1 "{filename}.jpg"', shell=True)
-    
-    try:
-        if thumb == "No":
-            thumbnail = f"{filename}.jpg"
-        else:
-            thumbnail = thumb
-    except Exception as e:
-        await m.reply_text(str(e))
 
-    dur = int(duration(filename))
+    thumbnail = thumb if thumb and thumb != "No" else generated_thumb
+
+    duration = get_video_duration(filename)
 
     start_time = time.time()
 
-    try:
-        await m.reply_video(filename, caption=cc, supports_streaming=True, height=720, width=1280, thumb=thumbnail, duration=dur, progress=progress_bar, progress_args=(reply, start_time))
+    try:        
+        await m.reply_video(filename, caption=cc, supports_streaming=True, height=720, width=1280, thumb=thumbnail, duration=duration, progress=progress_bar, progress_args=(reply, start_time))
                 
     except Exception as e:
-        await m.reply_text(str(e))
+        await print(str(e))
                 
     os.remove(filename)
     os.remove(thumbnail)

@@ -13,7 +13,6 @@ from p_bar import progress_bar
 from subprocess import getstatusoutput
 from aiohttp import ClientSession
 import helper
-from logger import logging
 import time
 import asyncio
 from pyrogram.types import User, Message
@@ -21,14 +20,6 @@ from config import api_id, api_hash, bot_token, auth_users, sudo_users
 import sys
 import re
 import os
-import threading
-from http.server import SimpleHTTPRequestHandler, HTTPServer
-
-def run_health_server():
-    server = HTTPServer(("0.0.0.0", 8000), SimpleHTTPRequestHandler)
-    server.serve_forever()
-
-threading.Thread(target=run_health_server, daemon=True).start()
 
 bot = Client(
     "bot",
@@ -196,25 +187,14 @@ async def account_login(bot: Client, m: Message):
                     url = res["url"]
 
             elif "d1d34p8vz63oiq" in url or "sec1.pw.live" in url:
-                url_id = url.split("/")[-2]
-                url = f"https://as-multiverse-b0b2769da88f.herokuapp.com/{url_id}/master.m3u8?token={pw_token}"
+                url = f"https://anonymouspwplayer-b99f57957198.herokuapp.com/pw?url={url}?token={pw_token}"
                 
             else:
                 url = url
                 
             name1 = links[i][0].replace("\t", "").replace(":", "").replace("/", "").replace("+", "").replace("#", "").replace("|", "").replace("@", "").replace("*", "").replace(".", "").replace("https", "").replace("http", "").strip()
             name = f'{str(count).zfill(3)}) {name1[:60]}'
-
-            if "youtu" in url:
-                ytf = f"b[height<={raw_text2}][ext=mp4]/bv[height<={raw_text2}][ext=mp4]+ba[ext=m4a]/b[ext=mp4]"
-            else:
-                ytf = f"b[height<={raw_text2}]/bv[height<={raw_text2}]+ba/b/bv+ba"
-
-            if "jw-prod" in url:
-                cmd = f'yt-dlp -o "{name}.mp4" "{url}"'
-            else:
-                cmd = f'yt-dlp -f "{ytf}" "{url}" -o "{name}.mp4"'
-
+            
             try:                               
                 cc = f'** {str(count).zfill(3)}.** {name1}\n**Batch Name :** {b_name}\n\n**Downloaded by : {CR}**'
                 cc1 = f'** {str(count).zfill(3)}.** {name1}\n**Batch Name :**{b_name}\n\n**Downloaded by : {CR}**'
@@ -243,7 +223,7 @@ async def account_login(bot: Client, m: Message):
                         continue
                 else:
                     prog = await m.reply_text(f"**Downloading:-**\n\n** Video Name :-** `{name}\nQuality - {raw_text2}`\n**link:**`{url}`**")
-                    res_file = await helper.download_video(url, cmd, name)
+                    res_file = await helper.download_video(url, name, raw_text2)
                     filename = res_file
                     await prog.delete(True)
                     await helper.send_vid(bot, m, cc, filename, thumb, name)
